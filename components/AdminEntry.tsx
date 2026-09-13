@@ -4,8 +4,23 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { collections } from "@/lib/collections";
 import { getSubcategoriesForCollection } from "@/lib/subcategories";
 
-type Draft = { id: string; title: string; collection: string; subcategory: string };
-type SaveResult = { ok?: boolean; error?: string; url?: string; published?: boolean; drafts?: Draft[] };
+type VaultReference = {
+  id: string;
+  title: string;
+  collection: string;
+  subcategory: string;
+  slug?: string;
+  published?: number;
+};
+
+type SaveResult = {
+  ok?: boolean;
+  error?: string;
+  url?: string;
+  published?: boolean;
+  drafts?: VaultReference[];
+  references?: VaultReference[];
+};
 
 export default function AdminEntry() {
   const [mode, setMode] = useState<"checking" | "login" | "ready" | "unconfigured">("checking");
@@ -14,7 +29,8 @@ export default function AdminEntry() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [drafts, setDrafts] = useState<VaultReference[]>([]);
+  const [references, setReferences] = useState<VaultReference[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -23,6 +39,7 @@ export default function AdminEntry() {
         if (response.ok) {
           const result = await response.json() as SaveResult;
           setDrafts(result.drafts || []);
+          setReferences(result.references || []);
           setMode("ready");
         } else setMode(response.status === 503 ? "unconfigured" : "login");
       })
@@ -47,7 +64,11 @@ export default function AdminEntry() {
       form.reset();
       setMode("ready");
       const draftsResponse = await fetch("/api/admin/references", { cache: "no-store" });
-      if (draftsResponse.ok) setDrafts(((await draftsResponse.json()) as SaveResult).drafts || []);
+      if (draftsResponse.ok) {
+        const result = (await draftsResponse.json()) as SaveResult;
+        setDrafts(result.drafts || []);
+        setReferences(result.references || []);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not sign in.");
     } finally {
@@ -81,7 +102,11 @@ export default function AdminEntry() {
       setSubcategory("residential");
       if (!result.published) {
         const draftsResponse = await fetch("/api/admin/references", { cache: "no-store" });
-        if (draftsResponse.ok) setDrafts(((await draftsResponse.json()) as SaveResult).drafts || []);
+        if (draftsResponse.ok) {
+        const result = (await draftsResponse.json()) as SaveResult;
+        setDrafts(result.drafts || []);
+        setReferences(result.references || []);
+      }
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save the reference.");
@@ -96,7 +121,7 @@ export default function AdminEntry() {
     setMessage("");
   }
 
-  async function publishDraft(draft: Draft) {
+  async function publishDraft(draft: VaultReference) {
     setBusy(true);
     setMessage("");
     try {
@@ -109,10 +134,48 @@ export default function AdminEntry() {
       const result = await response.json() as SaveResult;
       if (!response.ok) throw new Error(result.error || "Could not publish draft.");
       setDrafts((current) => current.filter((item) => item.id !== draft.id));
+      setReferences((current) =>
+        current.map((item) =>
+          item.id === draft.id ? { ...item, published: 1 } : item
+        )
+      );
       setMessage("Published. The reference is now in its gallery.");
       setSavedUrl(result.url || "");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not publish draft.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
+  async function deleteReference(reference: VaultReference) {
+    const confirmed = window.confirm(
+      `Delete "${reference.title}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setMessage("");
+    setSavedUrl("");
+
+    try {
+      const response = await fetch("/api/admin/references", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ id: reference.id }),
+      });
+
+      const result = await response.json() as SaveResult;
+      if (response.status === 401) setMode("login");
+      if (!response.ok) throw new Error(result.error || "Could not delete reference.");
+
+      setReferences((current) => current.filter((item) => item.id !== reference.id));
+      setDrafts((current) => current.filter((item) => item.id !== reference.id));
+      setMessage(`Deleted "${reference.title}".`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not delete reference.");
     } finally {
       setBusy(false);
     }
@@ -173,13 +236,23 @@ export default function AdminEntry() {
           <button type="submit" className="admin-submit" disabled={busy}>{busy ? "Saving…" : "Save reference ↗"}</button>
         </form>
       )}
-      {mode === "ready" && drafts.length > 0 && (
-        <section className="admin-drafts" aria-label="Unpublished drafts">
-          <div className="section-label"><span>DRAFTS</span><span>{String(drafts.length).padStart(2, "0")}</span></div>
-          {drafts.map((draft) => (
-            <div className="admin-draft" key={draft.id}>
-              <div><strong>{draft.title}</strong><span>{draft.collection} / {draft.subcategory}</span></div>
-              <button type="button" disabled={busy} onClick={() => publishDraft(draft)}>Publish ↗</button>
+      {mode === "ready" && references.length > 0 && (
+        <section className="admin-drafts" aria-label="Manage Vault">
+          <div className="section-label"><span>MANAGE VAULT</span><span>{String(references.length).padStart(2, "0")}</span></div>
+          {references.map((reference) => (
+            <div className="admin-draft" key={reference.id}>
+              <div>
+                <strong>{reference.title}</strong>
+                <span>
+                  {reference.collection} / {reference.subcategory} · {reference.published ? "Published" : "Draft"}
+                </span>
+              </div>
+              <div>
+                {!reference.published && (
+                  <button type="button" disabled={busy} onClick={() => publishDraft(reference)}>Publish ↗</button>
+                )}
+                <button type="button" disabled={busy} onClick={() => deleteReference(reference)}>Delete</button>
+              </div>
             </div>
           ))}
         </section>

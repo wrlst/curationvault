@@ -7,9 +7,14 @@ import { json, sameOrigin, type Context } from "../../_lib/types";
 export async function onRequestGet({ request, env }: Context) {
   if (!isConfigured(env)) return json({ error: "Admin is not configured." }, 503);
   if (!(await hasSession(request, env))) return json({ error: "Sign in required." }, 401);
-  const { results } = await env.DB!.prepare("SELECT id, title, collection, subcategory FROM vault_references WHERE published = 0 ORDER BY created_at DESC, rowid DESC")
-    .bind().all<{ id: string; title: string; collection: string; subcategory: string }>();
-  return json({ ok: true, drafts: results });
+  const { results } = await env.DB!.prepare("SELECT id, title, collection, subcategory, slug, published FROM vault_references ORDER BY created_at DESC, rowid DESC")
+    .bind().all<{ id: string; title: string; collection: string; subcategory: string; slug: string; published: number }>();
+
+  return json({
+    ok: true,
+    references: results,
+    drafts: results.filter((item) => item.published === 0),
+  });
 }
 
 function text(value: unknown, max = 500) {
@@ -119,4 +124,36 @@ export async function onRequestPatch({ request, env }: Context) {
   if (!draft) return json({ error: "Draft not found." }, 404);
   await env.DB!.prepare("UPDATE vault_references SET published = 1 WHERE id = ?1 AND published = 0").bind(id).run();
   return json({ ok: true, url: `/${draft.collection}/${draft.subcategory}/${draft.slug}/` });
+}
+
+
+export async function onRequestDelete({ request, env }: Context) {
+  if (!isConfigured(env)) return json({ error: "Admin is not configured." }, 503);
+  if (!(await hasSession(request, env))) return json({ error: "Sign in required." }, 401);
+  if (!sameOrigin(request) || !request.headers.get("Content-Type")?.startsWith("application/json")) {
+    return json({ error: "Invalid request." }, 403);
+  }
+
+  let id: unknown;
+  try {
+    id = (await request.json() as { id?: unknown }).id;
+  } catch {
+    return json({ error: "Invalid request." }, 400);
+  }
+
+  if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id)) {
+    return json({ error: "Invalid reference." }, 400);
+  }
+
+  const existing = await env.DB!.prepare(
+    "SELECT id FROM vault_references WHERE id = ?1"
+  ).bind(id).first<{ id: string }>();
+
+  if (!existing) return json({ error: "Reference not found." }, 404);
+
+  await env.DB!.prepare(
+    "DELETE FROM vault_references WHERE id = ?1"
+  ).bind(id).run();
+
+  return json({ ok: true });
 }
