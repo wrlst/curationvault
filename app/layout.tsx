@@ -13,13 +13,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fontlibrary.org//face/m-m-type-1"
-        />
-      </head>
-
       <body className="min-h-full flex flex-col">
         <Script id="theme-preference" strategy="beforeInteractive">
           {`try {
@@ -28,7 +21,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             document.documentElement.dataset.theme = theme;
           } catch {}`}
         </Script>
-
         {children}
       </body>
     </html>
