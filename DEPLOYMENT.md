@@ -1,62 +1,88 @@
-# Cloudflare Pages
+# Curation Vault on Cloudflare Pages
 
-This project exports static HTML, CSS, and JavaScript. No server, API keys,
-Cloudflare Workers adapter, or runtime environment variables are required.
+The existing `curationvault` Pages project can keep its GitHub integration and
+static Next.js build. The deployment now also contains lightweight Pages
+Functions in `functions/` and a Cloudflare D1 database for references added in
+the private admin. Do not create a second Pages project or change hosting
+platforms.
 
-## Build and preview
-
-Run `npm ci`, then `npm run build`. The deployable output is `out/`.
-The build uses Next.js's supported Webpack bundler because Turbopack's
-persistence cache has failed on the local external drive.
-
-To preview with Python 3 installed:
-
-```sh
-python3 -m http.server 4173 --bind 127.0.0.1 --directory out
-```
-
-Open http://localhost:4173. `next start` is not used for static exports.
-Routes use directory indexes (for example `architecture/index.html`).
-
-## GitHub and Pages
-
-1. Create or select a GitHub repository under your chosen account. For a new
-   repository, leave README, license, and gitignore initialization unchecked.
-2. Review `git status`, then commit the source on `main`. Add your chosen
-   repository as `origin` and push `main`. Do not upload `out/` or `node_modules/`.
-3. In Cloudflare, open Workers & Pages, create a Pages project, and connect
-   the GitHub repository. Authorize access to that repository when prompted.
-4. Use these settings:
+## Build settings (unchanged)
 
 | Setting | Value |
 | --- | --- |
-| Project name | `curationvault` |
 | Production branch | `main` |
 | Framework preset | Next.js (Static HTML Export) |
-| Root directory | Repository root (leave blank) |
+| Root directory | Repository root (blank in Pages) |
 | Build command | `npm run build` |
-| Build output directory | `out` |
+| Output directory | `out` |
 
-Override the preset's `npx next build` command with `npm run build` to use
-the tested Webpack build. If `curationvault` is unavailable, stop and choose
-a name explicitly; the desired address is https://curationvault.pages.dev.
+`npm run build` exports the fixed collection/subcategory pages and the existing
+local reference. New D1 references are fetched by the gallery after page load;
+a Pages Function serves the static detail shell at their new URLs. Published
+entries therefore appear without another Git push. The original local image
+and its statically generated detail page continue to work. If the D1 binding is
+absent, existing static content remains available and admin writes fail closed.
 
-## Content and image workflow
+## One-time Cloudflare setup
 
-References in `lib/references.ts` automatically generate pages for their
-collection during each build. Push content changes to trigger a new deployment.
-Unknown slugs return 404; there is no on-demand page generation.
+Complete these steps **before deploying the code that adds Pages Functions**:
 
-`imageUrl` takes priority over local `image`. Local files live in `public/images`.
-Images load directly from their source with optimization disabled for static
-hosting, so no `/_next/image` endpoint is required. Cropped archive cards and
-uncropped detail photos keep their existing CSS treatment. Direct remote URLs
-do not require allowlist edits in this mode. Remote hosts must permit hotlinking;
-expired or blocked links cannot be repaired by static hosting. Original image
-bytes are served, so large files should be compressed before adding them.
+1. In Cloudflare **Workers & Pages → D1 SQL database → Create Database**, create
+   a database named `curationvault-content`.
+2. Open that database's **Console**. Paste the complete contents of
+   [`migrations/0001_create_references.sql`](./migrations/0001_create_references.sql)
+   and select **Execute**. Confirm the `vault_references` and
+   `admin_login_attempts` tables exist. The schema is idempotent.
+3. Open the existing **Workers & Pages → curationvault → Settings → Bindings**.
+   Add a **D1 database** binding with variable name exactly `DB`, selecting
+   `curationvault-content`. Configure the production environment (and preview
+   too if you want admin testing on preview deployments).
+4. In **Settings → Variables and Secrets → Add**, create `ADMIN_PASSWORD` as an
+   **encrypted secret**, not a plain variable. Use a unique, randomly generated
+   password of at least 16 characters (prefer 24+), and store it in your
+   password manager. Configure the production environment (and preview if
+   applicable). Never put it in Git, `wrangler.toml`, or browser source code.
+5. Commit and push this source to the already-connected `main` branch. Pages
+   should automatically redeploy the **same** project. Bindings and secrets
+   take effect on a new deployment, so redeploy once more if they were added
+   after the code deployment.
 
-Theme preference is stored in the visitor's browser, with system preference used
-initially. It requires no server. No accounts or deployment have been created
-by the local preparation step.
+After deployment, visit `/admin/`, sign in, create a published test reference,
+then confirm it appears under its selected subcategory and opens at its detail
+URL. Check a published gallery's `/api/references?collection=objects&subcategory=furniture`
+endpoint if troubleshooting. An unauthenticated request to `/api/admin/references`
+must return `401`.
 
-Official guide: https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/
+## Security and editing
+
+The admin form is a static login shell; reference writes happen only in Pages
+Functions. `ADMIN_PASSWORD` is checked server-side. The successful login sets
+an HTTP-only, signed, 12-hour, SameSite=Strict session cookie. Admin writes
+require that cookie, a same-origin JSON request, and valid taxonomy/URL data.
+The login endpoint limits repeated failures per IP using D1. Use HTTPS in
+production, and restrict access to the password. The public archive does not
+require sign-in.
+
+The admin takes direct HTTPS image URLs and stores the URL, not the bytes.
+Remote hosts must allow hotlinking. Archive cards retain their crop; detail
+images keep their natural aspect ratio. If a remote image fails to load, the
+existing placeholder is shown without losing metadata. The optional `image`
+field remains available for local files under `public/images` in code.
+
+Subcategories are fixed site structure, edited in `lib/subcategories.ts` and
+deployed through Git. References are content, entered through `/admin/`. Drafts
+are saved with `published = 0`, can be published later from the admin's Drafts
+list, and are not returned by the public API until published.
+
+## Local verification
+
+Run `npm ci`, `npm run build`, and `npm run lint`. The deployable output is
+`out/`; `functions/` is detected by Cloudflare Pages at the project root.
+`npm run dev` previews the static UI but does not provide D1 or Pages Functions.
+For full-stack local testing, run `npx wrangler pages dev out` with a local D1
+binding and a local `ADMIN_PASSWORD` secret. Local D1 storage is separate from
+production; apply the migration locally before using the admin.
+
+Relevant Cloudflare guides: [Pages Functions](https://developers.cloudflare.com/pages/functions/),
+[D1 database setup](https://developers.cloudflare.com/d1/get-started/), and
+[Pages bindings and secrets](https://developers.cloudflare.com/pages/functions/bindings/).

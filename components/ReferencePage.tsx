@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Collection } from "@/lib/collections";
 import type { Reference } from "@/lib/references";
+import type { Subcategory } from "@/lib/subcategories";
 import ReferenceImage from "@/components/ReferenceImage";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
@@ -9,11 +10,13 @@ import { normalizeExternalUrl } from "@/lib/image-config";
 type ReferencePageProps = {
   collection: Collection;
   reference: Reference;
+  subcategory: Subcategory;
 };
 
 export default function ReferencePage({
   collection,
   reference,
+  subcategory,
 }: ReferencePageProps) {
   const creatorUrl = normalizeExternalUrl(reference.creator?.url);
   const sourceUrl = normalizeExternalUrl(reference.source?.url);
@@ -37,7 +40,7 @@ export default function ReferencePage({
 
         <article className="reference-information">
           <div className="section-label">
-            <span>{collection.number} / {reference.category}</span>
+            <span>{collection.number} / <Link href={`/${collection.slug}`}>{collection.title}</Link> / <Link href={`/${collection.slug}/${subcategory.slug}`}>{subcategory.title}</Link></span>
             <span>Reference</span>
           </div>
 
@@ -96,8 +99,8 @@ export default function ReferencePage({
             </dl>
           )}
 
-          <Link href={`/${collection.slug}`} className="text-link">
-            ← Back to {collection.title}
+          <Link href={`/${collection.slug}/${subcategory.slug}`} className="text-link">
+            ← Back to {subcategory.title}
           </Link>
         </article>
       </section>

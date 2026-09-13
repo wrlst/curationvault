@@ -1,7 +1,12 @@
 export type Reference = {
+  id?: string;
   slug: string;
   title: string;
-  category: string;
+  collection?: string;
+  // Legacy placeholder records may omit this; only categorized records are public.
+  category?: string;
+  // Leave unset for unpublished placeholder records. Set a valid subcategory slug to publish.
+  subcategory?: string;
   creator?: {
     name: string;
     url?: string;
@@ -17,6 +22,8 @@ export type Reference = {
     label: string;
     url: string;
   };
+  published?: boolean;
+  tags?: string[];
 };
 
 export const references: Reference[] = [
@@ -28,11 +35,8 @@ export const references: Reference[] = [
   slug: "reference-one",
   title: "Reference One",
   category: "Architecture",
-  creator: {
-    name: "Unknown",
-  },
-  location: "Location",
-  year: "Year",
+  collection: "architecture",
+  subcategory: "residential",
   image: "/images/architecture-01.png",
   imageWidth: 1704,
   imageHeight: 2556,
@@ -202,4 +206,13 @@ export const objectReferences = references.filter(
 
 export function getReferencesForCollection(title: string) {
   return references.filter((reference) => reference.category === title);
+}
+
+export function getReferencesForSubcategory(collection: string, subcategory: string) {
+  return references.filter(
+    (reference) =>
+      reference.collection === collection &&
+      reference.subcategory === subcategory &&
+      reference.published !== false
+  );
 }

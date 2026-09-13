@@ -1,0 +1,10 @@
+{
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "curationvault-content",
+      "database_id": "c0295719-ac39-49c7-b2a7-79cb092db131",
+      "preview_database_id": "DB"
+    }
+  ]
+}
