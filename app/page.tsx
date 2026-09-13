@@ -9,13 +9,12 @@ export default function Home() {
       <SiteHeader />
 
       <section className="hero">
-        <p className="eyebrow">A CURATED DIGITAL ARCHIVE</p>
+        <p className="eyebrow">ARCHIVE / REFERENCE / PRESERVE / EXPLORE</p>
 
-        <h1>A collection of things worth discovering.</h1>
+        <h1>A digital library for architecture, objects, interiors and ideas.</h1>
 
         <p className="hero-description">
-          A considered archive of architecture, interior spaces, objects, and
-          the ideas surrounding them.
+          A considered archive of visual references, selected and preserved for exploration.
         </p>
       </section>
 

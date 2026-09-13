@@ -247,7 +247,7 @@ export default function AdminEntry() {
                   {reference.collection} / {reference.subcategory} · {reference.published ? "Published" : "Draft"}
                 </span>
               </div>
-              <div>
+              <div className="admin-draft-actions">
                 {!reference.published && (
                   <button type="button" disabled={busy} onClick={() => publishDraft(reference)}>Publish ↗</button>
                 )}

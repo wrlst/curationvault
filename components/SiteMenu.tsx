@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import BrandWordmark from "@/components/BrandWordmark";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function SiteMenu() {
@@ -35,27 +36,26 @@ export default function SiteMenu() {
       >
         <div className="menu-panel">
           <div className="menu-topline">
-            <span>CURATION VAULT</span>
+            <span className="brand-wordmark"><BrandWordmark /></span>
             <button type="button" className="menu-close" onClick={closeMenu} aria-label="Close menu">Close ×</button>
           </div>
           <nav className="menu-content" aria-label="Site navigation">
-            <div className="menu-group">
-              <span className="menu-group-label">01 / EXPLORE</span>
-              <Link href="/about" className="menu-primary-link" onClick={closeMenu}>About <span aria-hidden="true">↗</span></Link>
+            <div className="menu-primary">
+              <Link href="/architecture" onClick={closeMenu}>Architecture</Link>
+              <Link href="/interior-spaces" onClick={closeMenu}>Interior Spaces</Link>
+              <Link href="/objects" onClick={closeMenu}>Objects</Link>
             </div>
-            <div className="menu-group">
-              <span className="menu-group-label">02 / SOCIALS</span>
-              <a href="https://www.instagram.com/curationvault/" target="_blank" rel="noreferrer" className="menu-link">Instagram <span aria-hidden="true">↗</span></a>
-              <a href="https://www.tiktok.com/@curationvault" target="_blank" rel="noreferrer" className="menu-link">TikTok <span aria-hidden="true">↗</span></a>
-              <span className="menu-handle">@curationvault</span>
-            </div>
-            <div className="menu-group">
-              <span className="menu-group-label">03 / EMAIL</span>
-              <a href="mailto:curationvault@gmail.com" className="menu-email">curationvault@gmail.com</a>
-            </div>
-            <div className="menu-group menu-theme">
-              <span className="menu-group-label">04 / DARK MODE</span>
-              <ThemeToggle />
+            <div className="menu-utilities">
+              <div className="menu-utility-links">
+                <Link href="/about" onClick={closeMenu}>About</Link>
+                <a href="https://www.instagram.com/curationvault/" target="_blank" rel="noreferrer">Instagram</a>
+                <a href="https://www.tiktok.com/@curationvault" target="_blank" rel="noreferrer">TikTok</a>
+                <a href="mailto:curationvault@gmail.com">Email</a>
+              </div>
+              <div className="menu-theme-row">
+                <span>Light / Dark</span>
+                <ThemeToggle />
+              </div>
             </div>
           </nav>
         </div>

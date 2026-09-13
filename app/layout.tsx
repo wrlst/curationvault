@@ -8,6 +8,13 @@ export const metadata: Metadata = {
     template: "%s — Curation Vault",
   },
   description: "A considered digital archive of visual references.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/brand/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

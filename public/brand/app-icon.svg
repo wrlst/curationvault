@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Curation Vault app icon">
+  <rect width="256" height="256" rx="48" fill="#F8F8F8"/>
+  <g fill="#0B0B0B">
+    <circle cx="54" cy="54" r="11"/><circle cx="91" cy="54" r="10"/><circle cx="128" cy="54" r="9"/><circle cx="165" cy="54" r="8"/><circle cx="202" cy="54" r="7"/>
+    <circle cx="54" cy="91" r="10"/><circle cx="91" cy="91" r="9"/><circle cx="128" cy="91" r="8"/><circle cx="165" cy="91" r="7"/><circle cx="202" cy="91" r="6"/>
+    <circle cx="54" cy="128" r="9"/><circle cx="91" cy="128" r="8"/><circle cx="128" cy="128" r="7"/><circle cx="165" cy="128" r="6"/><circle cx="202" cy="128" r="5"/>
+    <circle cx="54" cy="165" r="8"/><circle cx="91" cy="165" r="7"/><circle cx="128" cy="165" r="6"/><circle cx="165" cy="165" r="5"/><circle cx="202" cy="165" r="4"/>
+    <circle cx="54" cy="202" r="7"/><circle cx="91" cy="202" r="6"/><circle cx="128" cy="202" r="5"/><circle cx="165" cy="202" r="4"/><circle cx="202" cy="202" r="3"/>
+  </g>
+</svg>

@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function SiteFooter() {
   return (
     <footer className="site-footer">
-      <Link href="/">CURATION VAULT</Link>
+      <Link href="/">BUILT TO LAST / MEANT TO BE EXPLORED</Link>
       <a
         href="https://www.instagram.com/curationvault/"
         target="_blank"

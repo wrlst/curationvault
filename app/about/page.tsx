@@ -1,5 +1,6 @@
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import BrandWordmark from "@/components/BrandWordmark";
 
 export default function AboutPage() {
   return (
@@ -12,7 +13,7 @@ export default function AboutPage() {
           <span>Curation Vault</span>
         </div>
 
-        <h1>CURATION VAULT</h1>
+        <h1 className="brand-wordmark"><BrandWordmark /></h1>
 
         <p>
           A considered digital archive of architecture, interior spaces,
